@@ -105,8 +105,16 @@ gcp_project_id = "customer-gcp-project"
 # gke_secrets_kms_key_name = "projects/customer-gcp-project/locations/us-west1/keyRings/gke-secrets/cryptoKeys/gke-secrets"
 # Set false if the GKE service agent already has KMS encrypter/decrypter permission on the existing key.
 # grant_gke_secrets_kms_key_iam = true
-# enable_pd_kms also encrypts GKE node and booter boot disks using pd_kms_key_name.
-# Leave pd_kms_key_name empty to create one shared disk key.
+# enable_pd_kms encrypts new PVC disks and the booter boot disk using pd_kms_key_name.
+# Leave pd_kms_key_name empty to create a shared PVC/booter disk key.
+# Enable GKE node boot disk CMEK independently from PVC and booter disk CMEK.
+# Omit the flag to preserve the PR #177 shared PD key behavior; set false to disable it explicitly.
+# enable_gke_node_boot_disk_kms = true
+# gke_node_boot_disk_kms_key_name = "projects/customer-gcp-project/locations/us-west1/keyRings/example/cryptoKeys/gke-boot"
+# Set false when the Compute Engine service agent is already authorized on an existing key.
+# grant_gke_node_boot_disk_kms_key_iam = false
+# Protection level applies only when Terraform creates the GKE boot disk key.
+# gke_node_boot_disk_kms_protection_level = "HSM"
 # Local SSD cannot use CMEK. If disallowed, also size/type the replacement boot disk.
 # gke_node_group_local_ssd_counts = { search = 0, tiered = 0 }
 # enable_resource_manager_tags = true
@@ -117,7 +125,7 @@ gcp_project_id = "customer-gcp-project"
 # agent_server_host = "cloud-tunnel.gcp-us-west1.byoc.cloud.zilliz.com"
 # agent_tunnel_host = "k8sxxxxxxxx.gcp-us-west1.byoc.cloud.zilliz.com"
 
-# Optional shared CMEK for PVC and GKE/booter boot disks (disabled by default).
+# Optional shared CMEK for new PVCs and the booter boot disk (disabled by default).
 # enable_pd_kms = true
 # Empty creates a dedicated regional key; otherwise supply an existing key.
 # pd_kms_key_name = "projects/customer-gcp-project/locations/us-west1/keyRings/example/cryptoKeys/pd"

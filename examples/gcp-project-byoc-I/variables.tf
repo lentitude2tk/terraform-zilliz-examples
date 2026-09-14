@@ -519,13 +519,47 @@ variable "labels" {
 }
 
 variable "enable_pd_kms" {
-  description = "Enable shared CMEK for PVC Persistent Disks and GKE/booter boot disks."
+  description = "Enable shared CMEK for PVC Persistent Disks and the booter boot disk."
   type        = bool
   default     = false
 }
 
+variable "enable_gke_node_boot_disk_kms" {
+  description = "Enable CMEK for GKE node boot disks independently. Null preserves the PR #177 shared PD key behavior; false disables GKE boot disk CMEK; true uses the dedicated configuration."
+  type        = bool
+  default     = null
+}
+
+variable "gke_node_boot_disk_kms_key_name" {
+  description = "Existing regional Cloud KMS key used only for GKE node boot disks. Empty creates a dedicated key when enable_gke_node_boot_disk_kms is true."
+  type        = string
+  default     = ""
+
+  validation {
+    condition     = var.gke_node_boot_disk_kms_key_name == "" || can(regex("^projects/[^/]+/locations/[^/]+/keyRings/[^/]+/cryptoKeys/[^/]+$", var.gke_node_boot_disk_kms_key_name))
+    error_message = "gke_node_boot_disk_kms_key_name must be empty or a full Cloud KMS crypto key resource name."
+  }
+}
+
+variable "grant_gke_node_boot_disk_kms_key_iam" {
+  description = "Grant the Compute Engine service agent access to the GKE node boot disk key. Created keys are always granted."
+  type        = bool
+  default     = true
+}
+
+variable "gke_node_boot_disk_kms_protection_level" {
+  description = "Protection level for a newly created GKE node boot disk key only. Existing keys are reused unchanged."
+  type        = string
+  default     = "SOFTWARE"
+
+  validation {
+    condition     = contains(["SOFTWARE", "HSM"], var.gke_node_boot_disk_kms_protection_level)
+    error_message = "Protection level must be SOFTWARE or HSM."
+  }
+}
+
 variable "pd_kms_key_name" {
-  description = "Existing regional Cloud KMS crypto key for PVC and boot disks. Empty creates one shared disk key."
+  description = "Existing regional Cloud KMS crypto key for new PVCs and the booter boot disk. Empty creates one shared disk key."
   type        = string
   default     = ""
 }

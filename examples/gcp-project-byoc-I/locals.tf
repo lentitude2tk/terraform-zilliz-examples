@@ -10,6 +10,11 @@ locals {
   dataplane_gcp_region = trimprefix(data.zillizcloud_byoc_i_project_settings.this.region, "gcp-")
   gcp_region           = var.gcp_region != "" ? var.gcp_region : local.dataplane_gcp_region
   gcp_zones            = var.gcp_zones != null ? var.gcp_zones : ["${local.gcp_region}-a", "${local.gcp_region}-b", "${local.gcp_region}-c"]
+  gke_node_boot_disk_kms_key_name = (
+    var.enable_gke_node_boot_disk_kms == null
+    ? module.pd_kms.key_name
+    : var.enable_gke_node_boot_disk_kms ? module.gke_node_boot_disk_kms.key_name : ""
+  )
 
   enable_private_link = var.enable_private_link && data.zillizcloud_byoc_i_project_settings.this.private_link_enabled
 
