@@ -488,6 +488,21 @@ image_repo_url = "us-docker.pkg.dev/<gcp-project-id>/<repository>"
 
 Terraform will use `<image_repo_url>/gcp-byoc-i-booter:latest` for the booter VM and `<image_repo_url>/cloud-agent:<agent_tag>` for cloud-agent when the Zilliz project settings provide an agent tag. If `booter_image` is set, it remains a full-image override for the booter and takes precedence over `image_repo_url`.
 
+The Compute Engine operating-system image for the booter VM is configured
+separately. It defaults to the public COS stable family. If the organization
+policy `compute.trustedImageProjects` does not allow `projects/cos-cloud`, point
+the booter at a compatible image in an approved project:
+
+```hcl
+booter_source_image = "projects/dev52-test-apps-dataprocessing/global/images/<approved-image>"
+```
+
+An image family is also accepted, for example
+`projects/<trusted-project>/global/images/family/<approved-family>`. The customer
+image must provide a container runtime compatible with the booter startup script.
+Changing `booter_source_image` does not change the booter container image or the
+cloud-agent image repository.
+
 For booter troubleshooting, set `booter_print_serial_logs_on_apply = true` to print the booter VM serial console logs during `terraform apply`. This requires `gcloud` to be installed and authenticated on the Terraform runner.
 
 Resource Manager tags are enabled by default. When no tag IDs are provided, Terraform creates a per-dataplane tag key derived from `data_plane_id` and a `booter` tag value, so multiple BYOC-I dataplanes can be created in the same GCP project without sharing a fixed project-level tag key. If your Terraform runner cannot manage tags, either set both `vendor_tag_key_id` and `vendor_tag_value_id` to use a pre-created tag, or set `enable_resource_manager_tags = false`. With tags enabled, booter self-delete permission is scoped to the exact booter VM instance name plus the Resource Manager tag. When tags are disabled, booter self-delete permission is scoped to the exact booter VM instance name only.

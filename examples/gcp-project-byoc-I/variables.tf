@@ -34,6 +34,17 @@ variable "booter_image" {
   default     = ""
 }
 
+variable "booter_source_image" {
+  description = "Compute Engine source image used for the booter VM. Set this to an approved image when compute.trustedImageProjects disallows cos-cloud."
+  type        = string
+  default     = "projects/cos-cloud/global/images/family/cos-stable"
+
+  validation {
+    condition     = can(regex("^projects/[^/]+/global/images/(family/)?[^/]+$", var.booter_source_image))
+    error_message = "booter_source_image must be a full Compute Engine image or image-family path."
+  }
+}
+
 variable "gcp_zones" {
   description = "GCP zones used by GKE node pools. Defaults to <settings region>-a/b/c."
   type        = list(string)
