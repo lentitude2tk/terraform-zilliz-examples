@@ -339,8 +339,8 @@ This setting encrypts Kubernetes Secrets stored in GKE etcd. It does not configu
 
 ### Disk CMEK and key protection levels
 
-PVC disks, GKE node boot disks (including the temporary default pool), and the
-booter boot disk share the existing PD KMS configuration and one IAM binding:
+PVC disks and the booter boot disk share the existing PD KMS configuration and
+one IAM binding:
 
 ```hcl
 enable_pd_kms = true
@@ -356,12 +356,28 @@ and requires `roles/cloudkms.cryptoKeyEncrypterDecrypter` on the key. Cross-proj
 keys require permission to manage the key's IAM when automatic grants are enabled.
 Module-created keys are always granted to the Compute Engine service agent.
 
-The default `enable_pd_kms = false` leaves disk CMEK disabled. A supplied key alone
-does not enable encryption. There is no separate boot-disk key or IAM switch.
-**Existing deployments with `enable_pd_kms = true` will also enable boot-disk CMEK
-after this upgrade, potentially replacing node pools and the booter.** Review the
-plan and schedule disruption before applying. Disabling this option affects both
-PVC and boot-disk configuration and removes the module-managed key/grant as applicable.
+The default `enable_pd_kms = false` leaves PVC/booter CMEK disabled. A supplied
+`pd_kms_key_name` alone does not enable encryption. Enabling or changing it can
+replace the booter and affects newly created PVCs; review the plan before applying.
+
+To use an independent key only for GKE node boot disks, set:
+
+```hcl
+enable_gke_node_boot_disk_kms   = true
+gke_node_boot_disk_kms_key_name = "projects/<key-project>/locations/<region>/keyRings/<ring>/cryptoKeys/<key>"
+grant_gke_node_boot_disk_kms_key_iam = false # Existing key is pre-authorized.
+# Applies only when Terraform creates the key; defaults to SOFTWARE.
+gke_node_boot_disk_kms_protection_level = "HSM"
+```
+
+This corresponds to gcloud `--boot-disk-kms-key` for the temporary default pool
+and all managed GKE node pools. With the flag explicitly set, it is independent of
+the booter and PVC key. `true` enables the dedicated configuration; `false` disables
+GKE boot-disk CMEK even when PD CMEK is enabled. Omitting the flag preserves PR #177
+compatibility by continuing to share the PD key with GKE. When enabled with an empty
+key name, Terraform creates a dedicated regional key. For an existing key, Terraform
+grants its IAM permission by default; set the grant flag false only when that
+permission was applied externally.
 
 GKE Secrets encryption remains independent and covers etcd secrets only. Existing
 compliant keys, including EKM keys, can be reused subject to service and organization

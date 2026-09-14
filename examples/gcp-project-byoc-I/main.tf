@@ -103,7 +103,7 @@ module "gke" {
   secrets_kms_key_name                 = var.gke_secrets_kms_key_name
   kms_protection_level                 = var.gke_secrets_kms_protection_level
   grant_secrets_kms_key_iam            = var.grant_gke_secrets_kms_key_iam
-  boot_disk_kms_key_name               = module.pd_kms.key_name
+  boot_disk_kms_key_name               = local.gke_node_boot_disk_kms_key_name
   node_group_local_ssd_counts          = var.gke_node_group_local_ssd_counts
   node_group_disk_overrides            = var.gke_node_group_disk_overrides
   labels                               = local.common_labels
@@ -263,4 +263,26 @@ module "pd_kms" {
   name_prefix          = local.gke_cluster_name
 
   depends_on = [google_project_service.required]
+}
+
+module "gke_node_boot_disk_kms" {
+  source = "../../modules/gcp_byoc_i/pd-kms"
+
+  enabled  = var.enable_gke_node_boot_disk_kms == true
+  key_name = var.gke_node_boot_disk_kms_key_name
+  grant_key_iam = (
+    var.grant_gke_node_boot_disk_kms_key_iam &&
+    !(
+      var.enable_pd_kms &&
+      var.grant_pd_kms_key_iam &&
+      var.gke_node_boot_disk_kms_key_name != "" &&
+      var.gke_node_boot_disk_kms_key_name == var.pd_kms_key_name
+    )
+  )
+  kms_protection_level = var.gke_node_boot_disk_kms_protection_level
+  project_id           = var.gcp_project_id
+  region               = local.gcp_region
+  name_prefix          = "${local.gke_cluster_name}-boot"
+
+  depends_on = [google_project_service.required, module.pd_kms]
 }
