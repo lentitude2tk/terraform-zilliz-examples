@@ -179,6 +179,7 @@ module "booter_vm" {
   subnet_self_link                = module.vpc.primary_subnet_self_link
   booter_service_account_email    = module.iam.booter_sa_email
   booter_image                    = local.booter_image
+  source_image                    = var.booter_source_image
   machine_type                    = var.booter_machine_type
   failure_self_delete_ttl_seconds = var.booter_failure_self_delete_ttl_seconds
   print_serial_logs_on_apply      = var.booter_print_serial_logs_on_apply
