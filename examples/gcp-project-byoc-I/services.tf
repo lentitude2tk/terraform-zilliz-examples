@@ -6,7 +6,8 @@ locals {
     "dns.googleapis.com",
     "iam.googleapis.com",
     "storage.googleapis.com",
-    ], var.enable_pd_kms || var.enable_gcs_kms || var.enable_gke_secrets_encryption ? ["cloudkms.googleapis.com"] : [],
+    ], var.enable_pd_kms || var.enable_gcs_kms || var.enable_gke_secrets_encryption || var.enable_cmek ? ["cloudkms.googleapis.com"] : [],
+    var.enable_cmek ? ["iamcredentials.googleapis.com"] : [],
   var.gke_binary_authorization_evaluation_mode != "" ? ["binaryauthorization.googleapis.com"] : []))
 }
 

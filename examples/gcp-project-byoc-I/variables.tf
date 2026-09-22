@@ -645,3 +645,23 @@ variable "gke_node_group_disk_overrides" {
   }
 
 }
+variable "enable_cmek" {
+  type        = bool
+  default     = false
+  description = "Provision and register Milvus CMEK. Separate from GCS/PD encryption; clusters must still opt in."
+}
+
+variable "cmek_key_name" {
+  type        = string
+  default     = ""
+  description = "Existing regional CryptoKey resource name. Empty creates one."
+}
+
+variable "cmek_protection_level" {
+  type    = string
+  default = "SOFTWARE"
+  validation {
+    condition     = contains(["SOFTWARE", "HSM"], var.cmek_protection_level)
+    error_message = "Choose SOFTWARE or HSM."
+  }
+}
